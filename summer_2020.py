@@ -2,7 +2,7 @@
 
 import losteering_process as lp
 import sporteering_login as login
-#from upload_gdrive import upload_file
+from upload_gdrive import upload_file
 
 
 df = lp.fetch_datafile(login.username, login.password)
@@ -26,4 +26,4 @@ lp.classify(df, event_name, event_controls, csv_file)
 
 csv_file.close()
 
-#upload_file(csv_filename, csv_filename)
+upload_file(csv_filename, csv_filename)
