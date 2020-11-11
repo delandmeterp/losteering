@@ -42,10 +42,11 @@ def fetch_datafile(username, password):
     
     return pd.DataFrame(data=d)
 
-def test_seq(dfu, event_controls, seq_controls, u, times_OK, times_KO, logs, tstart, tend):
+def test_seq(dfu, event_controls, seq_controls, u, times_OK, times_KO, ncontrols, logs, tstart, tend):
     correct = True
     ucontrol = np.array([int(uc) for uc in seq_controls])
     order = -1
+    ncontrols[u] = 0
     for ic, ec in enumerate(event_controls):
         found = np.where(ucontrol==ec)[0]
         if len(found) == 0:
@@ -58,6 +59,9 @@ def test_seq(dfu, event_controls, seq_controls, u, times_OK, times_KO, logs, tst
             logs[u] = ("%de balise (%d) trouvée dans le mauvaise ordre" % (ic+1, ec))
             break
         order = found
+        ncontrols[u] = ic + 1
+        
+    
     
     t_format = "%d/%m/%Y %H:%M:%S"
     t0 = pd.to_datetime(tstart, format=t_format)
@@ -69,9 +73,28 @@ def test_seq(dfu, event_controls, seq_controls, u, times_OK, times_KO, logs, tst
         logs[u] = 'OK'
     else:
         times_KO[u] = dt
-    return times_OK, times_KO, logs
+    return times_OK, times_KO, ncontrols, logs
 
-def classify(df, event_name, event_controls, csv_file):
+def test_chasse(dfu, event_controls, seq_controls, u, times_OK, times_KO, ncontrols, logs, tstart, tend):
+    seq_controls = np.unique([int(c) for c in seq_controls])
+    n = 0
+    for s in seq_controls:
+        if s in event_controls:
+            n +=1
+
+    logs[u] = '%d balises trouvées' % n
+    ncontrols[u] = n
+    
+    t_format = "%d/%m/%Y %H:%M:%S"
+    t0 = pd.to_datetime(tstart, format=t_format)
+    t1 = pd.to_datetime(tend, format=t_format)
+    dt = (t1-t0).total_seconds()
+    times_OK[u] = (dt, -1e9*n + dt)
+
+
+    return times_OK, times_KO, ncontrols, logs
+
+def classify(df, event_name, event_controls, csv_file, chasse=False):
     csv_file.write('Classement %s\n' % event_name)
     print('Classement %s' % event_name)
     dfe = df[df['Event Name'] == event_name]
@@ -79,6 +102,7 @@ def classify(df, event_name, event_controls, csv_file):
     
     times_OK = {}
     times_KO = {}
+    ncontrols = {}
     logs = {}
     dates = {}
     
@@ -101,8 +125,12 @@ def classify(df, event_name, event_controls, csv_file):
                         uu_seq = uu
                     else:
                         uu_seq = uu + ('(%d)' % i)
-                    times_OK, times_KO, logs = test_seq(dfu, event_controls, seq_controls, uu_seq,
-                             times_OK, times_KO, logs, utimes[starts[i]], utimes[ends[i]])
+                    if not chasse:
+                        times_OK, times_KO, ncontrols, logs = test_seq(dfu, event_controls, seq_controls, uu_seq,
+                            times_OK, times_KO, ncontrols, logs, utimes[starts[i]], utimes[ends[i]])
+                    else:
+                        time_OK, time_KO, ncontrols, logs = test_chasse(dfu, event_controls, seq_controls, uu_seq,
+                            times_OK, times_KO, ncontrols, logs, utimes[starts[i]], utimes[ends[i]])
                     dates[uu_seq] = utimes[starts[i]][:10]
         except:
             #logs[uu] = "Start/Stop non scannés"
@@ -110,14 +138,17 @@ def classify(df, event_name, event_controls, csv_file):
             #dates[uu]
             pass        
             
-    stimes_OK = list(times_OK.items())
-    stimes_OK.sort(key=lambda item: item[1])
-    stimes_KO = list(times_KO.items())
-    stimes_KO.sort(key=lambda item: item[1])
-    
-    stimes = stimes_OK + stimes_KO
+    if not chasse:
+        stimes_OK = list(times_OK.items())
+        stimes_OK.sort(key=lambda item: item[1])
+        stimes_KO = list(times_KO.items())
+        stimes_KO.sort(key=lambda item: item[1])
+        stimes = stimes_OK + stimes_KO
+    else:
+        stimes = list(times_OK.items())
+        stimes.sort(key=lambda item: item[1][0])
     for st in stimes:
-        t = int(st[1])
+        t = int(st[1]) if not chasse else int(st[1][0])
         h = t // 3600
         m = (t - h * 3600) // 60
         s =  t % 60
@@ -125,8 +156,8 @@ def classify(df, event_name, event_controls, csv_file):
             h = 99
             m = 99
             s = 99
-        print('%s (%s): %02d:%02d:%02d, %s' % (st[0], dates[st[0]], h, m, s, logs[st[0]]))
-        csv_file.write('%s, (%s), %02d:%02d:%02d, %s\n' % (st[0], dates[st[0]], h, m, s, logs[st[0]]))
+        print('%s (%s), %d: %02d:%02d:%02d, %s' % (st[0], dates[st[0]], ncontrols[st[0]], h, m, s, logs[st[0]]))
+        csv_file.write('%s, (%s), %d, %02d:%02d:%02d, %s\n' % (st[0], dates[st[0]], ncontrols[st[0]],  h, m, s, logs[st[0]]))
  
     csv_file.write('\n\n')
     
