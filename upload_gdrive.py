@@ -36,19 +36,23 @@ def get_gdrive_service():
 
 def upload_file(filename, filename_gdrive):
     service = get_gdrive_service()
-    files = service.files().list().execute()
+    page_token = None
+    folders = service.files().list(q="mimeType='application/vnd.google-apps.folder'",
+                                   spaces='drive',
+                                   fields='nextPageToken, files(id, name)',
+                                   pageToken=page_token).execute()['files']
     found = False
-    for f in files['files']:
-        if f['name'] == 'TESTLOSTEERING':
+    for f in folders:
+        if f['name'] == 'LOSTeering':
+            folder_id = f['id']
             found = True
             break
+    
         
     if not found:
         print('Error here')
         return
-    
-    folder_id = service.files().get(fileId=f['id'], fields='parents').execute()["parents"][0]
-    
+     
     file_metadata = {
         "name": filename_gdrive,
         "parents": [folder_id]

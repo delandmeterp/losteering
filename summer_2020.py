@@ -36,4 +36,5 @@ lp.classify(df, event_name, event_controls, csv_file, chasse=True)
 
 csv_file.close()
 
-upload_file(csv_filename, csv_filename)
+
+#upload_file(csv_filename, csv_filename)
