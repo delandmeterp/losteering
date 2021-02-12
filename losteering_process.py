@@ -157,7 +157,7 @@ def classify(df, event_name, event_controls, csv_file, chasse=False):
             m = 99
             s = 99
         print('%s (%s), %d: %02d:%02d:%02d, %s' % (st[0], dates[st[0]], ncontrols[st[0]], h, m, s, logs[st[0]]))
-        csv_file.write('%s, (%s), %d, %02d:%02d:%02d, %s\n' % (st[0], dates[st[0]], ncontrols[st[0]],  h, m, s, logs[st[0]]))
+        csv_file.write('%s, %s, %d, %02d:%02d:%02d, %s\n' % (st[0], dates[st[0]], ncontrols[st[0]],  h, m, s, logs[st[0]]))
  
     csv_file.write('\n\n')
     

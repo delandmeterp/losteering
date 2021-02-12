@@ -3,12 +3,13 @@
 import losteering_process as lp
 import sporteering_login as login
 from upload_gdrive import upload_file
+from write_xlsx import write_xlsx
 
 
 df = lp.fetch_datafile(login.username, login.password)
 
-csv_filename = 'LOSTeering Winter 2021.csv'
-csv_file = open(csv_filename, 'w') 
+basename = 'LOSTeering Winter 2021_results'
+csv_file = open(basename + '.csv', 'w') 
 
 csv_file.write('LOSTeering Winter 2021\n')
 
@@ -36,6 +37,7 @@ event_controls = [101, 102, 103, 104, 105, 106, 107, 108, 109, 111, 112, 113, 11
 lp.classify(df, event_name, event_controls, csv_file, chasse=True)
 
 csv_file.close()
+write_xlsx(basename)
 
 
-upload_file(csv_filename, csv_filename)
+upload_file(basename + '.xlsx', basename + '.xlsx')
