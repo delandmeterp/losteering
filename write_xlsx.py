@@ -6,7 +6,7 @@ from datetime import datetime
 
 def write_xlsx(basename):
     
-    book = openpyxl.load_workbook('empty.xlsx')
+    book = openpyxl.load_workbook('empty_winter2021.xlsx')
     sheet = book.active
     
     
