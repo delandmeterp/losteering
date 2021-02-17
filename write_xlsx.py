@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import openpyxl
-from datetime import date
+from datetime import datetime
 
 
 def write_xlsx(basename):
@@ -10,10 +10,10 @@ def write_xlsx(basename):
     sheet = book.active
     
     
-    today = date.today()
-    today_str = '%02d/%02d/%04d' % (today.day, today.month, today.year)
+    now = datetime.now()
+    now_str = now.strftime("%d/%m/%Y %H:%M:%S")
     
-    sheet['C2'] = today_str
+    sheet['C2'] = now_str
     
     starts = [6, 10, 14, 21, 28]
     

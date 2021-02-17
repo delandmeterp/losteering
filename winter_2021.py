@@ -40,4 +40,4 @@ csv_file.close()
 write_xlsx(basename)
 
 
-upload_file(basename + '.xlsx', basename + '.xlsx')
+upload_file(basename + '.xlsx', basename)

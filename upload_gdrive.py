@@ -39,6 +39,7 @@ def upload_file(filename, filename_gdrive):
     page_token = None
     folders = service.files().list(q="mimeType='application/vnd.google-apps.folder'",
                                    spaces='drive',
+                                   pageSize=1000,
                                    fields='nextPageToken, files(id, name)',
                                    pageToken=page_token).execute()['files']
     found = False
@@ -47,6 +48,18 @@ def upload_file(filename, filename_gdrive):
             folder_id = f['id']
             found = True
             break
+        
+    if found:
+        found = False    
+        kwargs = {"q": "'{}' in parents".format(folder_id),
+                  "fields": "nextPageToken,incompleteSearch,files(id,parents,name)"}
+        files = service.files().list(**kwargs).execute()['files']
+        for f in files:
+            if f['name'] == filename_gdrive:
+                file_id = f['id']
+                found = True
+                break
+     
     
         
     if not found:
@@ -55,10 +68,13 @@ def upload_file(filename, filename_gdrive):
      
     file_metadata = {
         "name": filename_gdrive,
-        "parents": [folder_id]
+        "mimeType": "application/vnd.google-apps.spreadsheet",
+        #"parents": [folder_id]
     }
     # upload
-    media = MediaFileUpload(filename, resumable=True)
-    service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    media = MediaFileUpload(filename, mimetype="application/vnd.ms-excel", resumable=True)
+    # service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    service.files().update(body=file_metadata, fileId=file_id, media_body=media, fields='id').execute()
+    
 
     
